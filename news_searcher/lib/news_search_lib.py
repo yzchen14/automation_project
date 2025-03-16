@@ -197,7 +197,7 @@ class MailGroupManager:
     def send_debug_mail(self, nums_days = 1):
         logger.debug(f"Sending debug mail for {self.name}")
         self.get_news(num_days=nums_days)
-        self.email_list = ['yzchenzf@tmsc.com']
+        email_list = ['yzchenzf@tmsc.com']
 
 
 
@@ -205,6 +205,13 @@ class MailGroupManager:
         if datetime.now().hour != 7:
             logger.error(f"It is {datetime.now().hour}:00, not sending the mail")
             return
+        
+        logger.debug(f"Sending formal mail for {self.name}")
+        self.get_news(num_days=nums_days)
+        email_list = self.record.get_email_list()
+        html_content = self.render_mail()
+        self.send_email_with_outlook(html_content, email_list)
+        self.generate_send_record(self.news_records)
 
 
     def get_news(self, num_days):
@@ -214,6 +221,12 @@ class MailGroupManager:
             keyword_record__in=self.keyword_records,
             news_record__date__gte=datetime.now() - timedelta(days=num_days)
         ).all()
+
+        for news_record in self.news_records:
+            news_record.keyword_list = CorrelationRecord.objects.filter(
+                news_record=news_record, 
+                keyword_record__in=self.keyword_records
+            ).all()
         logger.debug(f"Total news records: " + str(len(self.news_records)))
 
 
@@ -221,4 +234,13 @@ class MailGroupManager:
     def render_mail(self):
         pass
 
+    def send_email_with_outlook(self, html_content, email_list):
+        pass
+
+
+    def generate_send_record(self, news_records):
+        for news_record in news_records:
+            send_record, created = NewsSendRecord.objects.get_or_create(mail_group_name=self.name, news_record=news_record)
+            if created:
+                send_record.save()
 

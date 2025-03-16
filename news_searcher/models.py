@@ -77,3 +77,11 @@ class ExclusionSiteRecord(models.Model):
 
     def __str__(self):
         return self.site
+    
+
+
+class NewsSendRecord(models.Model):
+    mail_group_name = models.CharField(max_length=255, null=True)
+    news_record = models.ForeignKey(NewsRecord, on_delete=models.CASCADE, null=True)
+    timestamp = models.DateTimeField(null = True)
+
