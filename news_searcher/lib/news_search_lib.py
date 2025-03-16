@@ -6,17 +6,21 @@ import hashlib
 import urllib
 import configparser
 import datetime
-from tqdm import tqdm
+
 from bs4 import BeautifulSoup
 from loguru import logger
 from datetime import datetime, timedelta
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
 from django.conf import settings
+from tqdm import tqdm
 from news_searcher.models import *
+from django.template import loader
 
 class NewsStorageManager:
     def __init__(self, archive_folder=None):
@@ -221,18 +225,34 @@ class MailGroupManager:
             keyword_record__in=self.keyword_records,
             news_record__date__gte=datetime.now() - timedelta(days=num_days)
         ).all()
-
-        for news_record in self.news_records:
-            news_record.keyword_list = CorrelationRecord.objects.filter(
-                news_record=news_record, 
-                keyword_record__in=self.keyword_records
-            ).all()
+        self.get_correlation_keywords_for_news_records()
+        self.fetch_summarization_data()
         logger.debug(f"Total news records: " + str(len(self.news_records)))
 
 
 
+    def get_correlation_keywords_for_news_records(self):
+        for news_record in self.news_records:
+            news_record.keyword_list = CorrelationRecord.objects.filter(
+                news_record=news_record,
+                keyword_record__in=self.keyword_records
+            ).all()
+            
+
+    def fetch_summarization_data(self):
+        for news_record in self.news_records:
+            with open(news_record.file_location, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            news_record.summarization_data = data
+
+
     def render_mail(self):
-        pass
+        t = loader.get_template("news_searcher/email_template.html")
+        html_content = t.render({"records": self.news_records})
+        return html_content
+    
+
+
 
     def send_email_with_outlook(self, html_content, email_list):
         pass

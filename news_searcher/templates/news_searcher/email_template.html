@@ -1,0 +1,40 @@
+<html>
+
+<head>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+</style>
+
+
+    
+</head>
+
+
+<body>
+
+{% for record in records %}
+<li><b>{{ record.title }}</b> [{% for keyword in record.keyword_list %}{{ keyword.keyword }}{% if not forloop.last %}, {% endif %}{% endfor %}]</li>
+{% endfor %}
+
+{% for record in records %}
+<h3>{{ record.title }}</h3>
+<p>{{ record.date|date:"Y-m-d" }} - {{ record.source }}</p>
+<p>Keywords: [{% for keyword in record.keyword_list %}{{ keyword.keyword }}{% if not forloop.last %}, {% endif %}{% endfor %}]</p>
+<p>Summary: {{ record.summary }}</p>
+{% endfor %}
+
+
+
+
+
+
+
+
+
+</body> 
+
+
+</html>
