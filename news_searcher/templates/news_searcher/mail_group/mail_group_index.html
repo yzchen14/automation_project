@@ -1,0 +1,173 @@
+{% extends "news_searcher/base.html" %}
+{% load static %}
+
+{% block head %}
+
+
+{% endblock %}
+
+
+{% block content %}
+<h2>Mail Group Management</h2>
+
+<h3>New Mail Group</h3>
+
+<form method="POST" class="post-form" enctype="multipart/form-data">  
+    <div class="form-group">
+        <table class="table table-bordered table-hover" style="width: 95%;">
+            <tbody>
+                {% csrf_token %}  
+                {{ form.as_table }}
+                <tr>
+                    <td colspan="2"><button type="submit" class="btn btn-outline-primary">Save</button>  </td>
+                </tr>
+            
+            </tbody>
+        </table>
+
+    </div>
+</form>
+<br><br>
+<h3>Mail Group</h3>
+<table class="table table-bordered table-hover" style="width: 95%;">
+    <head>
+        <tr>
+            <th>Name</th>
+            <th>Level</th>
+            <th>Keyword</th>
+            <th>Email List</th>
+            <th></th>
+        </tr>
+    </head>
+
+    <tbody>
+        {% for mail_group in records %}
+            <tr id="mail_group_{{mail_group.id}}">
+                <td style="font-weight: bold;">{{mail_group.name}}</td>
+                <td>{{mail_group.level}}</td>
+                <td name="keyword_list" style="text-align: left;">
+                    {% for keyword in mail_group.keyword_list %}
+                        <span style="border: 2px solid rgb(84, 84, 243); border-radius: 5px; padding: 10px; display: inline-block; position: relative; font-size: 1.2em;">
+                            {{ keyword }}
+                            <button type="button" style="position: absolute; right: -10px; top: -10px; background-color: transparent; border: none; font-size: 1.5em; color: red; font-weight: bold;" onclick="delete_subscription('{{mail_group.id}}', '{{keyword}}')">&times;</button>
+                        </span>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{% for email in mail_group.get_email_list %}{{email}}; {% endfor %}</td>
+                <td style="width: 10px;" nowrap="nowrap">
+                    <button onclick="show_add_keyword_modal('{{mail_group.id}}')" class="btn btn-outline-primary">Add Keyword</button>
+                    <button onclick="delete_mail_group('{{mail_group.id}}')" class="btn btn-outline-danger">Delete</button>
+                
+                </td>
+                 
+
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="modal fade" id="add_keyword_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalCenterTitle">Add Keyword to Mail Group</h5>
+            </div>
+            <div class="modal-body">
+                <select id="add_keyword_select" class="form-control">
+                    {% for keyword_record in keyword_records %}
+                        <option value="{{keyword_record.id}}">{{keyword_record.keyword}}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" id="current_mail_group">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="add_keyword_to_mail_group()">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block script %}
+{% load static %}
+
+<script>
+
+
+    function show_add_keyword_modal(mail_group_id){
+        $('#add_keyword_modal').modal('show');
+        $('#current_mail_group').val(mail_group_id);
+    }
+
+    function add_keyword_to_mail_group(){
+        mail_group_id = $('#current_mail_group').val();
+        keyword_id = $('#add_keyword_select').val();
+        $.ajax({
+            url: "{% url 'news:mail_group_add_keyword' %}",
+            type: "POST",
+            headers: { "X-CSRFToken": csrftoken }, // Correct way to pass CSRF token
+            data: {
+                id: mail_group_id,
+                keyword_id: keyword_id,
+            },
+            success: function (data) {
+                $('#add_keyword_modal').modal('hide');
+                $('#mail_group_' + mail_group_id).find('td[name="keyword_list"]').html('');
+                for (const keyword of data['keyword_list']){
+                    $('#mail_group_' + mail_group_id).find('td[name="keyword_list"]').append(`
+                        <span style="border: 2px solid rgb(84, 84, 243); border-radius: 5px; padding: 10px; display: inline-block; position: relative; font-size: 1.2em;">
+                            ${keyword}
+                            <button type="button" style="position: absolute; right: -10px; top: -10px; background-color: transparent; border: none; font-size: 1.5em; color: red; font-weight: bold;" onclick="delete_subscription('${mail_group_id}', '${keyword}')">&times;</button>
+                        </span>`);
+                }
+            }
+        });
+    }
+
+
+    function delete_subscription(mail_group_id, keyword){
+        if (confirm("Are you sure you want to delete this subscription?") && confirm("This action is irreversible. Are you really sure?")) {
+            $.ajax({
+                url: "{% url 'news:mail_group_delete_keyword' %}",
+                type: "POST",
+                headers: { "X-CSRFToken": csrftoken }, // Correct way to pass CSRF token
+                data: {
+                    mail_group_id: mail_group_id,
+                    keyword: keyword,
+                },
+                success: function (data) {
+                    $('#mail_group_' + mail_group_id).find('td[name="keyword_list"]').html('');
+                    for (const keyword of data['keyword_list']){
+                        $('#mail_group_' + mail_group_id).find('td[name="keyword_list"]').append(`
+                            <span style="border: 2px solid rgb(84, 84, 243); border-radius: 5px; padding: 10px; display: inline-block; position: relative; font-size: 1.2em;">
+                                ${keyword}
+                                <button type="button" style="position: absolute; right: -10px; top: -10px; background-color: transparent; border: none; font-size: 1.5em; color: red; font-weight: bold;" onclick="delete_subscription('${mail_group_id}', '${keyword}')">&times;</button>
+                            </span>`);
+                    }
+                }
+            });
+        }
+    }
+
+    function delete_mail_group(mail_group_id){
+        if (confirm("Are you sure you want to delete this mail group?") && confirm("This action is irreversible. Are you really sure?")) {
+            $.ajax({
+                url: "{% url 'news:mail_group_delete' %}",
+                type: "POST",
+                headers: { "X-CSRFToken": csrftoken }, // Correct way to pass CSRF token
+                data: {
+                    id: mail_group_id,
+                },
+                success: function (data) {
+                    $('#mail_group_' + mail_group_id).remove();
+                }
+            });
+        }
+    }
+
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "news_searcher/base.html" %}
+{% load static %}
+
+{% block head %}
+
+
+{% endblock %}
+
+
+{% block content %}
+<h2>Exclusion Site Record Management</h2>
+
+<h3>New Exclusion Site</h3>
+
+<form method="POST" class="post-form" enctype="multipart/form-data">  
+    <div class="form-group">
+        <table class="table table-bordered table-hover" style="width: 80%;">
+            <tbody>
+                {% csrf_token %}  
+                {{ form.as_table }}  
+                <tr>
+                    <td colspan="2"><button type="submit" class="btn btn-outline-primary">Save</button>  </td>
+                </tr>
+            </tbody>        
+        </table>
+
+    </div>
+</form> 
+
+
+<h3>Exclusion Site List</h3>
+ 
+<table class="table table-bordered table-hover" style="width: 80%;" id="exclusion_site_table">
+    <thead>
+        <tr>
+            <th>Site Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+            <tr id="exclusion_site_{{record.id}}">
+                <td style="font-weight: bold;">{{record.site}}</td>
+                <td>
+                    <button onclick="exclusion_site_management_delete('{{record.id}}')" class="btn btn-outline-danger">Delete</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+{% endblock %}
+
+
+{% block script %}
+{% load static %}
+
+<script>
+    function exclusion_site_management_delete(id) {
+        $.ajax({
+            url: "{% url 'news:exclusion_site_management_delete' %}",
+            type: "POST",
+            data: {
+                'id': id,
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+            },
+            success: function (data) {
+                if (data.Status == "Success") {
+                    $('#exclusion_site_' + id).remove();
+                }
+            }
+        });
+    }   
+
+
+</script>
+{% endblock %}

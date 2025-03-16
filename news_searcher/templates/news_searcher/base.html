@@ -1,0 +1,44 @@
+<html>
+<head>
+    {% load static %}
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href= "{% static 'css/yzc_style.css' %}?v=1.5" rel="stylesheet">
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script> 
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script> 
+    <script src="{% static 'js/datatables.min.js' %}"></script> 
+    <script src="{% static 'js/pagemap.js' %}"></script> 
+    
+
+    {% block head %}
+
+    {% endblock head %}
+</head>
+<body>
+    <ul class="NavHor">
+        <li><a href="{% url 'news:mail_group_index' %}">Mail Group</a></li>
+        <li><a href="{% url 'news:keyword_management_index' %}">Keyword Management</a></li>
+        <li><a href="{% url 'news:exclusion_site_management_index' %}">Exclusion Site Record Management</a></li>
+
+        
+    </ul>
+
+
+    <div align="center">
+        {% block content %}
+
+        {% endblock content %}
+    </div>
+
+    {% block script %}
+
+    {% endblock script %}
+
+    <script>
+        var current_url = window.location.href.toString().split(window.location.host)[1];
+        $("a[href='" + current_url+ "']").addClass("active");
+        const csrftoken = '{{ csrf_token }}';
+    </script>
+</body>
+
+</html>

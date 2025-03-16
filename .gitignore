@@ -1,0 +1,5 @@
+*.pyc
+*.ipynb
+db.sqlite3
+NewsArchive/*
+chromedriver.exe

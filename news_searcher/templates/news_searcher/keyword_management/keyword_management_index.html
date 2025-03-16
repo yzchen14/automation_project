@@ -1,0 +1,83 @@
+{% extends "news_searcher/base.html" %}
+{% load static %}
+
+{% block head %}
+
+
+{% endblock %}
+
+
+{% block content %}
+<h2>Keyword Management</h2>
+
+
+<h3>New Keyword Record</h3>
+
+<form method="POST" class="post-form" enctype="multipart/form-data">  
+    <div class="form-group">
+        <table class="table table-bordered table-hover" style="width: 80%;">
+            <tbody>
+                {% csrf_token %}  
+                {{ form.as_table }}
+                <tr>
+                    <td colspan="2"><button type="submit" class="btn btn-outline-primary">Save</button>  </td>
+                </tr>
+            
+            </tbody>
+        </table>
+
+    </div>
+</form>
+
+<h3>Keyword Records</h3>
+<table class="table table-bordered table-hover" style="width: 80%;" id="keyword_table">
+    <thead>
+        <tr>
+            <th>Keyword</th>
+            <th>Description</th>
+            <th>Correlation Question</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for keyword_record in records %}
+            <tr>
+                <td style="font-weight: bold;">{{keyword_record.keyword}}</td>
+                <td>{{keyword_record.description}}</td>
+                <td>{{keyword_record.correlation_words}}</td>
+                <td>
+                    <a href="{% url 'news:keyword_management_edit' keyword_record.id %}" class="btn btn-outline-primary">Edit</a>
+                    <button onclick="keyword_management_delete('{{keyword_record.id}}')" class="btn btn-outline-danger">Delete</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+
+{% block script %}
+{% load static %}
+
+<script>
+    $(document).ready( function () {
+        $('#keyword_table').DataTable();
+    })
+
+    function keyword_management_delete(id) {
+        $.ajax({
+            url: "{% url 'news:keyword_management_delete' %}",
+            type: "POST",
+            headers: { "X-CSRFToken": csrftoken }, // Correct way to pass CSRF token
+            data: {
+                id: id,
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+    }
+
+</script>
+{% endblock %}
