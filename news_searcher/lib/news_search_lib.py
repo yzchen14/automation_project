@@ -201,7 +201,7 @@ class MailGroupManager:
     def send_debug_mail(self, nums_days = 1):
         logger.debug(f"Sending debug mail for {self.name}")
         self.get_news(num_days=nums_days)
-        email_list = ['yzchenzf@tmsc.com']
+        email_list = ['']
 
 
 
