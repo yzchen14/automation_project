@@ -1,0 +1,104 @@
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    </head>
+    <body>
+        <div id="root">
+
+
+
+
+        </div>  
+        
+        
+<script>
+    $(document).ready(function(){
+        fetchJsonData();
+    });
+
+    function fetchJsonData() {
+        $.ajax({
+            url: "{% url 'gantt_chart:fetchJsonData' %}",
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                console.log('JSON Data:', data);
+                plot_gantt_chart(data['data']);
+                // Process the JSON data here
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+    }
+
+    function plot_gantt_chart(data) {
+        data = JSON.parse(data);
+    
+        // Assign a unique numerical value to each toolID
+        let toolMap = {};
+        let uniqueTools = [...new Set(data.map(d => d.toolID))];
+        uniqueTools.forEach((tool, index) => {
+            toolMap[tool] = index + 1; // Assign numerical y value
+        });
+    
+        let statusColors = {
+            "UP": "green",
+            "LOST": "blue",
+            "WEQ": "pink",
+            "TPE": "purple"
+        };
+    
+        // Create traces for bars
+        let traces = data.map(d => ({
+            x: [d.StartTime, d.EndTime], // Start and End times
+            y: [toolMap[d.toolID], toolMap[d.toolID]], // Use numeric y-axis
+            mode: "lines+markers",
+            marker: { size: 1, color: statusColors[d.Status] || "gray" },
+            line: { width: 30, color: statusColors[d.Status] || "gray" },
+            name: d.Status,
+            hoverinfo: "x+y+name"
+        }));
+    
+        // Create annotation-like text traces
+        let textTraces = data
+            .filter(d => d.Remark) // Only include items with remarks
+            .map(d => ({
+                x: [(new Date(d.EndTime)).getTime()], // Position text at EndTime
+                y: [toolMap[d.toolID] + 0.1], // Shift text slightly above the bar
+                mode: "text",
+                text: [d.Remark],
+                textposition: "top center",
+                textfont: { size: 12, color: "black" },
+                showlegend: false
+            }));
+    
+        let layout = {
+            title: "Tool Usage Timeline",
+            xaxis: { title: "Time", type: "date" },
+            yaxis: {
+                title: "Tool ID",
+                tickvals: Object.values(toolMap), // Use numeric y values
+                ticktext: Object.keys(toolMap),   // Show original tool names
+                categoryorder: "array",
+                categoryarray: Object.keys(toolMap).reverse()
+            },
+            showlegend: false // Hide the legend
+        };
+    
+        Plotly.newPlot('root', [...traces, ...textTraces], layout).then(function (gd) {
+            gd.on('plotly_click', function (data) {
+                console.log(data.points[0]);
+            });
+        });
+    }
+
+</script>
+
+
+    </body>
+
+
+</html>
